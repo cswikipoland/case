@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>CSWIKICASE</title>
+<style>
+*{box-sizing:border-box;font-family:Segoe UI,sans-serif}
+body{margin:0;background:linear-gradient(135deg,#6a11cb,#8e2de2);color:white}
+.hidden{display:none}
+
+/* AUTH */
+.auth{height:100vh;display:flex;justify-content:center;align-items:center}
+.card{background:#fff;color:#000;width:360px;padding:30px;border-radius:18px;text-align:center}
+input,button{width:100%;padding:12px;margin-top:10px;border-radius:12px;border:none}
+button{background:#7b2cff;color:#fff;font-size:16px;cursor:pointer}
+
+/* PANEL */
+.panel{display:none;height:100vh;background:#0f0f14}
+.topbar{height:65px;display:flex;align-items:center;justify-content:space-between;
+padding:0 20px;background:rgba(20,20,30,.65);backdrop-filter:blur(15px)}
+.left{display:flex;align-items:center;gap:15px}
+.hamburger{font-size:26px;cursor:pointer}
+.balance{background:#00ff88;color:#00331a;padding:8px 14px;border-radius:12px;font-weight:700}
+.title{font-size:22px;font-weight:800}
+
+.sidebar{position:fixed;top:65px;left:0;width:230px;height:100%;
+background:rgba(20,20,30,.75);padding:20px;transform:translateX(-100%);transition:.3s}
+.sidebar.active{transform:translateX(0)}
+.item{padding:12px;border-radius:12px;cursor:pointer;margin-bottom:8px}
+.item:hover{background:rgba(255,255,255,.1)}
+.logout{color:#ff4d4d;font-weight:800}
+
+.content{padding:30px}
+
+/* CASE */
+.case{background:rgba(255,255,255,.08);padding:25px;border-radius:18px;width:520px}
+.roll-wrap{position:relative;overflow:hidden;border-radius:14px;border:2px solid rgba(255,255,255,.2);margin:15px 0;height:130px}
+.pointer{position:absolute;top:0;bottom:0;left:50%;width:4px;background:red;z-index:10}
+.roll{display:flex;align-items:center;will-change:transform}
+.skin{width:120px;height:90px;margin:0 10px;border-radius:12px;
+display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;text-align:center;flex-shrink:0}
+.common{background:#aaa;color:#000}
+.rare{background:#4da6ff}
+.legendary{background:gold;color:#000}
+
+/* INVENTORY */
+.inventory{display:grid;grid-template-columns:repeat(auto-fill,110px);gap:12px}
+.inv{height:100px;border-radius:12px;padding:5px;font-size:12px;
+display:flex;flex-direction:column;justify-content:center;align-items:center}
+.inv button{margin-top:5px;padding:5px;font-size:11px}
+
+/* CODES */
+.codesWrap{display:flex;justify-content:center;align-items:center}
+.codes{background:rgba(255,255,255,.12);padding:30px;border-radius:18px;width:360px;text-align:center}
+.codes input{background:rgba(0,0,0,.25);color:white}
+
+@media (max-width: 768px){
+  .content{padding:15px}
+  .case{width:100%}
+  .roll-wrap{height:120px}
+  .skin{width:100px;height:80px;font-size:11px}
+  .sidebar{width:200px}
+  .inventory{grid-template-columns:repeat(auto-fill,90px)}
+}
+@media (max-width: 480px){
+  .topbar{padding:0 10px}
+  .title{font-size:18px}
+  .balance{font-size:13px;padding:6px 10px}
+  .hamburger{font-size:22px}
+  .skin{width:90px;height:70px;font-size:10px}
+  .pointer{width:3px}
+  .card{width:90%}
+  .codes{width:90%}
+}
+
+
+@media (max-width: 480px){
+  body{font-size:14px}
+  .content{padding:10px}
+  .case{padding:15px}
+  .roll-wrap{height:110px}
+  .skin{width:80px;height:65px;font-size:9px;margin:0 6px}
+  .inventory{grid-template-columns:repeat(3,1fr)}
+  .sidebar{width:180px}
+}
+
+</style>
+</head>
+<body>
+
+<div class="auth" id="auth">
+  <div class="card">
+    <h2 id="authTitle">Logowanie</h2>
+    <input id="email" placeholder="Email">
+    <input id="pass" type="password" placeholder="Hasło">
+    <button onclick="authUser()">Zaloguj się</button>
+    <div style="margin-top:15px;cursor:pointer" onclick="toggle()">Nie masz konta? Zarejestruj się</div>
+  </div>
+</div>
+
+<div class="panel" id="panel">
+  <div class="topbar">
+    <div class="left">
+      <div class="hamburger" onclick="menu()">☰</div>
+      <div class="balance" id="money">0.00 PLN</div>
+    </div>
+    <div class="title">CSWIKICASE</div>
+    <div style="width:60px"></div>
+  </div>
+
+  <div class="sidebar" id="sidebar">
+    <div class="item" onclick="show('case')">Case</div>
+    <div class="item" onclick="show('inv')">Inventory</div>
+    <div class="item" onclick="show('codes')">KODY</div>
+    <div class="item" onclick="show('upgrade')">Ulepszenie</div>
+    <div class="item logout" onclick="logout()">WYLOGUJ SIĘ</div>
+  </div>
+
+  <div class="content">
+    <div id="case">
+      <div class="case">
+        <h3>CSWIKICASE – 5.00 PLN</h3>
+        <button id="openBtn" onclick="openCase()">Otwórz</button>
+        <div class="roll-wrap">
+          <div class="pointer"></div>
+          <div class="roll" id="roll"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="inv" class="hidden">
+      <h2>Inventory</h2>
+      <div class="inventory" id="inventory"></div>
+    </div>
+
+    <div id="codes" class="hidden">
+      <div class="codesWrap">
+        <div class="codes">
+          <h2>KODY</h2>
+          <input id="codeInput" placeholder="Wpisz kod">
+          <button onclick="useCode()">Aktywuj</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="upgrade" class="hidden">
+      <h2>Ulepszenie</h2>
+      <p>Wkrótce...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+let mode="login",current=null,rolling=false;
+let users=JSON.parse(localStorage.users||"{}");
+
+const skins=[
+{name:"PISTOL VIPER",price:4,rarity:"common",chance:40},
+{name:"RIFLE DESERT WOLF",price:4.5,rarity:"common",chance:45},
+{name:"RIFLE GOLDEN ASH",price:5.5,rarity:"rare",chance:60},
+{name:"SMG NEON FANG",price:3.2,rarity:"common",chance:30},
+{name:"RIFLE NIGHT STRIKE",price:8.8,rarity:"rare",chance:50},
+{name:"SHOTGUN IRON CLAW",price:50,rarity:"legendary",chance:1},
+{name:"PISTOL CRIMSON SPARK",price:2.5,rarity:"common",chance:11},
+{name:"SMG TOXIC WAVE",price:2.2,rarity:"common",chance:14},
+{name:"SMG URBAN SHADOW",price:6.9,rarity:"rare",chance:48},
+{name:"PISTOL STEEL BLOOM",price:1.5,rarity:"common",chance:22}
+];
+
+function pool(){let p=[];skins.forEach(s=>{for(let i=0;i<s.chance;i++)p.push(s)});return p;}
+
+function toggle(){
+mode=mode==="login"?"register":"login";
+authTitle.innerText=mode==="login"?"Logowanie":"Rejestracja";
+document.querySelector(".card button").innerText=mode==="login"?"Zaloguj się":"Zarejestruj się";
+}
+
+function authUser(){
+let e=email.value,p=pass.value;
+if(!e||!p)return alert("Uzupełnij dane");
+if(mode==="register"){
+if(users[e])return alert("Konto istnieje");
+users[e]={pass:p,money:10,inv:[],codes:[]};
+localStorage.users=JSON.stringify(users);
+alert("Konto utworzone");toggle();
+}else{
+if(!users[e]||users[e].pass!==p)return alert("Błędne dane");
+current=e;login();
+}}
+
+function login(){auth.style.display="none";panel.style.display="block";update()}
+function logout(){current=null;panel.style.display="none";auth.style.display="flex"}
+function menu(){sidebar.classList.toggle("active")}
+function show(id){
+["case","inv","codes","upgrade"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+}
+
+function update(){
+money.innerText=users[current].money.toFixed(2)+" PLN";
+renderInv();localStorage.users=JSON.stringify(users);
+}
+
+function openCase(){
+if(rolling)return;
+if(users[current].money<5)return alert("Brak kasy");
+rolling=true;openBtn.disabled=true;
+users[current].money-=5;update();
+
+const rollEl=document.getElementById("roll");
+rollEl.style.transition="none";
+rollEl.style.transform="translateX(0px)";
+rollEl.getBoundingClientRect(); // force reflow
+rollEl.innerHTML="";
+
+let p=pool(),items=[];
+for(let i=0;i<50;i++){
+let s=p[Math.floor(Math.random()*p.length)];
+items.push(s);
+rollEl.innerHTML+=`<div class="skin ${s.rarity}">${s.name}</div>`;
+}
+
+const winIndex=30;
+const skinWidth=140;
+const center=rollEl.parentElement.offsetWidth/2 - skinWidth/2;
+const offset=winIndex*skinWidth - center;
+
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+rollEl.style.transition="transform 4s cubic-bezier(.1,.9,.2,1)";
+rollEl.style.transform=`translateX(-${offset}px)`;
+}));
+
+setTimeout(()=>{
+let win=items[winIndex];
+users[current].inv.push(win);
+rolling=false;openBtn.disabled=false;
+update();
+},4200);
+}
+
+function renderInv(){
+inventory.innerHTML="";
+users[current].inv.forEach((s,i)=>{
+inventory.innerHTML+=`
+<div class="inv ${s.rarity}">
+${s.name}<br>${s.price} PLN
+<button onclick="sell(${i})">Sprzedaj</button>
+</div>`;
+});
+}
+
+function sell(i){
+users[current].money+=users[current].inv[i].price;
+users[current].inv.splice(i,1);
+update();
+}
+
+function useCode(){
+let c=codeInput.value.trim().toLowerCase();
+if(!current){alert("Musisz być zalogowany");return;}
+if(!users[current].codes) users[current].codes=[];
+if(c==="cimciun"){
+if(users[current].codes.includes(c))return alert("Kod już użyty");
+users[current].codes.push(c);
+users[current].money+=350;
+update();
+alert("Kod aktywowany +350 PLN");
+}else alert("Nieprawidłowy kod");
+codeInput.value="";
+}
+</script>
+</body>
+</html>
